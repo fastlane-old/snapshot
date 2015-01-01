@@ -123,7 +123,10 @@ module Snapshot
     # The scheme to use (either it's set, or there is only one, or user has to enter it)
     def scheme
       begin
-        command = "cd '#{File.expand_path('..', project_path)}'; xcodebuild -list"
+        command = "xcodebuild -project #{project_path} -list"
+        if project_path.split(".").last == "xcworkspace"
+          command = "xcodebuild -workspace #{project_path} -list"
+        end
         schemes = `#{command}`.split("Schemes:").last.split("\n").each { |a| a.strip! }.delete_if { |a| a == '' }
         Helper.log.debug "Found available schemes: #{schemes}"
 
