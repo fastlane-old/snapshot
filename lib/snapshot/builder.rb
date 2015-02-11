@@ -70,6 +70,7 @@ module Snapshot
           "CONFIGURATION_BUILD_DIR='#{BUILD_DIR}/build'",
           "-#{proj_key} '#{proj_path}'",
           "-scheme '#{scheme}'",
+          "-destination 'platform=iOS Simulator,name=iPad,OS=latest'",
           "DSTROOT='#{BUILD_DIR}'",
           "OBJROOT='#{BUILD_DIR}'",
           "SYMROOT='#{BUILD_DIR}'",
