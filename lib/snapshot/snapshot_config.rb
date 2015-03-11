@@ -150,7 +150,7 @@ module Snapshot
       unless result
         project_key = 'project'
         project_key = 'workspace' if project_path.end_with?'.xcworkspace'
-        command = "xcodebuild -#{project_key} '#{project_path}' -showBuildSettings | grep 'FULL_PRODUCT_NAME' | sed 's/[ ]*FULL_PRODUCT_NAME = //'"
+        command = "xcodebuild -#{project_key} '#{project_path}' -showBuildSettings | grep 'WRAPPER_NAME' | sed 's/[ ]*WRAPPER_NAME = //'"
         Helper.log.debug command
         
         result = `#{command}`.strip!
