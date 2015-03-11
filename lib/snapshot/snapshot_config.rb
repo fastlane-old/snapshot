@@ -22,9 +22,6 @@ module Snapshot
     # @return (String) The path to the JavaScript file to use
     attr_accessor :manual_js_file
 
-    # @return (String) The name of the build product, manually set by the user using the config file
-    attr_accessor :manual_app_name
-
     # @return (String) The path, in which the screenshots should be stored
     attr_accessor :screenshots_path
 
@@ -145,23 +142,20 @@ module Snapshot
 
     # Returns the file name of the build product
     def app_name
-      result = manual_app_name;
 
-      unless result
-        project_key = 'project'
-        project_key = 'workspace' if project_path.end_with?'.xcworkspace'
-        command = "xcodebuild -#{project_key} '#{project_path}' -showBuildSettings | grep 'WRAPPER_NAME' | sed 's/[ ]*WRAPPER_NAME = //'"
-        Helper.log.debug command
+      project_key = 'project'
+      project_key = 'workspace' if project_path.end_with?'.xcworkspace'
+      command = "xcodebuild -#{project_key} '#{project_path}' -showBuildSettings | grep 'WRAPPER_NAME' | sed 's/[ ]*WRAPPER_NAME = //'"
+      Helper.log.debug command
         
-        result = `#{command}`.strip!
+      result = `#{command}`.strip!
+      
+      if result
         Helper.log.debug "Found app name: #{result}"
+        return result
       end
 
-      unless result
-        raise "Could not determine which app name to use.".red
-      end
-
-      return result
+      return nil
     end
 
     # The JavaScript UIAutomation file
