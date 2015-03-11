@@ -9,7 +9,7 @@ module Snapshot
       SnapshotConfig.shared_instance.js_file # to verify the file can be found earlier
 
       Builder.new.build_app(clean: clean)
-      @app_path = Dir.glob("/tmp/snapshot/build/*.app").first
+      @app_path = "/tmp/snapshot/build/#{SnapshotConfig.shared_instance.app_name}"
 
       counter = 0
       errors = []
