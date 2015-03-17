@@ -140,6 +140,24 @@ module Snapshot
       File.basename(self.project_path, ".*" )
     end
 
+    # Returns the file name of the build product
+    def app_name
+
+      project_key = 'project'
+      project_key = 'workspace' if project_path.end_with?'.xcworkspace'
+      command = "xcodebuild -#{project_key} '#{project_path}' -showBuildSettings | grep 'WRAPPER_NAME' | sed 's/[ ]*WRAPPER_NAME = //'"
+      Helper.log.debug command
+        
+      result = `#{command}`.strip!
+      
+      if result
+        Helper.log.debug "Found app name: #{result}"
+        return result
+      end
+
+      return nil
+    end
+
     # The JavaScript UIAutomation file
     def js_file(ipad = false)
       result = manual_js_file
