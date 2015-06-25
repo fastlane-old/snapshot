@@ -177,6 +177,19 @@ module Snapshot
     end
 
     def determine_app_path
+      # Returns true if the given app identifier is the one we're looking for.
+      def is_requested_app_identifier(identifier)
+        desired = ENV["SNAPSHOT_APP_IDENTIFIER"]
+
+        # If a specific app identifier was specified, then only that one will do.
+        if desired and desired.length > 0 and identifier != desired
+          return false
+        end
+
+        # But if nothing was specified, then any one will do.
+        return true
+      end
+
       # Determine the path to the actual app and not the WatchKit app
       build_dir = SnapshotConfig.shared_instance.build_dir || '/tmp/snapshot'
       Dir.glob("#{build_dir}/**/*.app/*.plist").each do |path|
@@ -186,6 +199,9 @@ module Snapshot
 
         app_identifier = `/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' '#{path}' 2>&1`.strip
         if app_identifier and app_identifier.length > 0
+          # Make sure this is a suitable app identifier.
+          next unless is_requested_app_identifier(app_identifier)
+
           # This seems to be the valid Info.plist
           @app_identifier = app_identifier
           return File.expand_path("..", path) # the app
