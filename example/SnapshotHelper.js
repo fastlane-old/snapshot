@@ -25,7 +25,8 @@ function captureLocalizedScreenshot(name) {
   var target = UIATarget.localTarget();
   var model = target.model();
   var rect = target.rect();
-  var deviceOrientation = target.deviceOrientation();
+  var app = target.frontMostApp();
+  var appOrientation = app.interfaceOrientation();
   
   var theSize = (rect.size.width > rect.size.height) ? rect.size.width.toFixed() : rect.size.height.toFixed();
 
@@ -47,11 +48,11 @@ function captureLocalizedScreenshot(name) {
   }
 
   var orientation = "portrait";
-  if (deviceOrientation == UIA_DEVICE_ORIENTATION_LANDSCAPELEFT) {
+  if (appOrientation == UIA_DEVICE_ORIENTATION_LANDSCAPELEFT) {
     orientation = "landscapeleft";
-  } else if (deviceOrientation == UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT) {
+  } else if (appOrientation == UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT) {
     orientation = "landscaperight";
-  } else if (deviceOrientation == UIA_DEVICE_ORIENTATION_PORTRAIT_UPSIDEDOWN) {
+  } else if (appOrientation == UIA_DEVICE_ORIENTATION_PORTRAIT_UPSIDEDOWN) {
     orientation = "portrait_upsidedown";
   }
 
