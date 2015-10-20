@@ -194,10 +194,16 @@ module Snapshot
         next if watchkit_enabled == 'true' # we don't care about WatchKit Apps
 
         app_identifier = `/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' '#{path}' 2>&1`.strip
-        if app_identifier and app_identifier.length > 0
-          # This seems to be the valid Info.plist
-          @app_identifier = app_identifier
-          return File.expand_path("..", path) # the app
+        if app_identifier and app_identifier.length > 0 and !app_identifier.include? "Does Not Exist"
+          wanted_identifier = ENV["SNAPSHOT_APP_IDENTIFIER"]
+          if wanted_identifier != nil and wanted_identifier == app_identifier
+            @app_identifier = wanted_identifier
+            return File.expand_path("..", path) # the app
+          else if wanted_identifier == nil
+          	# This seems to be the valid Info.plist
+            @app_identifier = app_identifier
+            return File.expand_path("..", path) # the app
+          end
         end
       end
 
