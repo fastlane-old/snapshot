@@ -303,7 +303,7 @@ If you enable a clean status bar, you have to remove the `waitForLoadingIndicato
 ## Editing the `Snapfile`
 Change syntax highlighting to *Ruby*.
 
-### Simulator doesn't launch the application
+## Simulator doesn't launch the application
 
 When the app dies directly after the application is launched there might be 2 problems
 
@@ -312,11 +312,16 @@ When the app dies directly after the application is launched there might be 2 pr
 
 ## Determine language
 
-To detect the currently used localization in your tests, use the following code:
+To detect the currently used localization in your tests, use the following code
 
 ```javascript
 You can access the language using the `deviceLanguage` variable.
 ```
+
+
+## <a name="prefilling"></a> Prefilling data
+
+- You can prefill data within your app using [HSTestingBackchannel](https://github.com/ConfusedVorlon/HSTestingBackchannel)
 
 # Need help?
 Please submit an issue on GitHub and provide information about your setup
