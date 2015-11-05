@@ -312,7 +312,7 @@ When the app dies directly after the application is launched there might be 2 pr
 
 ## Determine language
 
-To detect the currently used localization in your tests, use the following code
+To detect the currently used localization in your tests, use the following code:
 
 ```javascript
 You can access the language using the `deviceLanguage` variable.
