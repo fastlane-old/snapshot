@@ -319,7 +319,7 @@ You can access the language using the `deviceLanguage` variable.
 ```
 
 
-## <a name="prefilling"></a> Prefilling data
+## Prefilling
 
 - You can prefill data within your app using [HSTestingBackchannel](https://github.com/ConfusedVorlon/HSTestingBackchannel)
 
