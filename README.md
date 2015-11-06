@@ -331,8 +331,8 @@ You can access the language using the `deviceLanguage` variable.
 	FASTLANE_SNAPSHOT=1
 
 - In the Preprocessor Macros setting of your project, set the following 
->- You probably want to set this at the project, rather than target level
->- The +0 ensures that when nothing is defined in the Environment, the macro has a valid value
+    - You probably want to set this at the project, rather than target level
+    - The +0 ensures that when nothing is defined in the Environment, the macro has a valid value
 
 ```
 FASTLANE_SNAPSHOT=($(FASTLANE_SNAPSHOT)+0)
