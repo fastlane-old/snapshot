@@ -323,6 +323,31 @@ You can access the language using the `deviceLanguage` variable.
 
 - You can prefill data within your app using [HSTestingBackchannel](https://github.com/ConfusedVorlon/HSTestingBackchannel)
 
+## Passing a Preprocessor Macro
+
+- Run snapshot using [Fastlane with .env files](https://github.com/fastlane/fastlane/blob/master/docs/FAQs.md#multiple-targets-of-the-same-underlying-app)
+- In your env.app file, Define
+
+	FASTLANE_SNAPSHOT=1
+
+- In the Preprocessor Macros setting of your project, set the following 
+>- You probably want to set this at the project, rather than target level
+>- The +0 ensures that when nothing is defined in the Environment, the macro has a valid value
+
+```
+FASTLANE_SNAPSHOT=($(FASTLANE_SNAPSHOT)+0)
+$(inherited)
+```
+
+- In your code, use
+
+```
+#if FASTLANE_SNAPSHOT
+	NSLOG(@"Compiled and run by snapshot")
+#end
+```
+
+
 # Need help?
 Please submit an issue on GitHub and provide information about your setup
 
