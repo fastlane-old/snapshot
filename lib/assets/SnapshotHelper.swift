@@ -10,15 +10,24 @@ import Foundation
 import XCTest
 
 var deviceLanguage = ""
+var alertDismissHandler: NSObjectProtocol?
 
 func setLanguage(app: XCUIApplication)
 {
     Snapshot.setLanguage(app)
 }
 
-func snapshot(name: String, waitForLoadingIndicator: Bool = true)
+func snapshot(name: String, waitForLoadingIndicator: Bool = true, waitForAlertsToBeHidden: Bool = true)
 {
-    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator)
+    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator, waitForAlertsToBeHidden: waitForAlertsToBeHidden)
+}
+
+func automaticallyHideAlerts(testCase:XCTestCase)
+{
+    if let previousDismissHandler = alertDismissHandler {
+        testCase.removeUIInterruptionMonitor(previousDismissHandler)
+    }
+    alertDismissHandler = Snapshot.automaticallyHideAlerts(testCase)
 }
 
 
@@ -37,29 +46,51 @@ func snapshot(name: String, waitForLoadingIndicator: Bool = true)
             print("Couldn't detect/set language...")
         }
     }
-    
-    class func snapshot(name: String, waitForLoadingIndicator: Bool = false)
+
+    class func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlertsToBeHidden: Bool = true)
     {
         if (waitForLoadingIndicator)
         {
             waitForLoadingIndicatorToDisappear()
         }
+        if (waitForAlertsToBeHidden)
+        {
+            waitForAlertsToDisappear()
+        }
         print("snapshot: \(name)") // more information about this, check out https://github.com/krausefx/snapshot
-        
+
         let view = XCUIApplication()
         let start = view.coordinateWithNormalizedOffset(CGVectorMake(32.10, 30000))
         let finish = view.coordinateWithNormalizedOffset(CGVectorMake(31, 30000))
         start.pressForDuration(0, thenDragToCoordinate: finish)
         sleep(1)
     }
-    
+
     class func waitForLoadingIndicatorToDisappear()
     {
         let query = XCUIApplication().statusBars.childrenMatchingType(.Other).elementBoundByIndex(1).childrenMatchingType(.Other)
-        
+
         while (query.count > 4) {
             sleep(1)
             print("Number of Elements in Status Bar: \(query.count)... waiting for status bar to disappear")
+        }
+    }
+
+    class func automaticallyHideAlerts(testCase:XCTestCase) -> NSObjectProtocol
+    {
+        return testCase.addUIInterruptionMonitorWithDescription("Snapshot alert auto hide") { (alert: XCUIElement) -> Bool in
+            print("Alert (\(alert.label)) will be hidden")
+            return false
+        }
+    }
+
+    class func waitForAlertsToDisappear()
+    {
+        let query = XCUIApplication().alerts
+
+        while (query.count > 0) {
+            sleep(1)
+            print("Found an alert... waiting for it to disappear")
         }
     }
 }
