@@ -1,4 +1,5 @@
 require 'fastlane_core'
+require 'credentials_manager'
 
 module Snapshot
   class Options
@@ -30,10 +31,10 @@ module Snapshot
                                      end),
         FastlaneCore::ConfigItem.new(key: :devices,
                                      description: "A list of devices you want to take the screenshots from",
-                                     is_string: false,
+                                     short_option: "-d",
+                                     type: Array,
                                      optional: true,
                                      verify_block: proc do |value|
-                                       raise "Devices must be an array" unless value.kind_of?(Array)
                                        available = FastlaneCore::Simulator.all
                                        value.each do |current|
                                          unless available.any? { |d| d.name.strip == current.strip }
@@ -43,10 +44,15 @@ module Snapshot
                                      end),
         FastlaneCore::ConfigItem.new(key: :languages,
                                      description: "A list of languages which should be used",
-                                     is_string: false,
-                                     default_value: [
-                                       'en-US'
-                                     ]),
+                                     short_option: "-g",
+                                     type: Array,
+                                     default_value: ['en-US']),
+        FastlaneCore::ConfigItem.new(key: :launch_arguments,
+                                     env_name: 'SNAPSHOT_LAUNCH_ARGUMENTS',
+                                     description: "A list of launch arguments which should be used",
+                                     short_option: "-m",
+                                     type: Array,
+                                     default_value: ['']),
         FastlaneCore::ConfigItem.new(key: :output_directory,
                                      short_option: "-o",
                                      env_name: "SNAPSHOT_OUTPUT_DIRECTORY",
@@ -70,6 +76,17 @@ module Snapshot
                                      description: "Enabling this option will automatically clear previously generated screenshots before running snapshot",
                                      default_value: false,
                                      is_string: false),
+        FastlaneCore::ConfigItem.new(key: :reinstall_app,
+                                     env_name: 'SNAPSHOT_REINSTALL_APP',
+                                     description: "Enabling this option will automatically uninstall the application before running it",
+                                     default_value: false,
+                                     is_string: false),
+        FastlaneCore::ConfigItem.new(key: :app_identifier,
+                                     env_name: 'SNAPSHOT_APP_IDENTIFIER',
+                                     short_option: "-a",
+                                     optional: true,
+                                     description: "The bundle identifier of the app to uninstall (only needed when enabling reinstall_app)",
+                                     default_value: ENV["SNAPSHOT_APP_IDENTITIFER"] || CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)),
 
         # Everything around building
         FastlaneCore::ConfigItem.new(key: :buildlog_path,

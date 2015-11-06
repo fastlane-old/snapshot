@@ -9,7 +9,7 @@
   <a href="https://github.com/fastlane/deliver">deliver</a> &bull; 
   <b>snapshot</b> &bull; 
   <a href="https://github.com/fastlane/frameit">frameit</a> &bull; 
-  <a href="https://github.com/fastlane/PEM">PEM</a> &bull; 
+  <a href="https://github.com/fastlane/pem">pem</a> &bull; 
   <a href="https://github.com/fastlane/sigh">sigh</a> &bull; 
   <a href="https://github.com/fastlane/produce">produce</a> &bull;
   <a href="https://github.com/fastlane/cert">cert</a> &bull;
@@ -17,7 +17,8 @@
   <a href="https://github.com/fastlane/pilot">pilot</a> &bull;
   <a href="https://github.com/fastlane/boarding">boarding</a> &bull;
   <a href="https://github.com/fastlane/gym">gym</a> &bull;
-  <a href="https://github.com/fastlane/scan">scan</a>
+  <a href="https://github.com/fastlane/scan">scan</a> &bull;
+  <a href="https://github.com/fastlane/match">match</a>
 </p>
 -------
 
@@ -131,6 +132,7 @@ Here a few links to get started:
 - [A first look into UI Tests](http://www.mokacoding.com/blog/xcode-7-ui-testing/)
 - [UI Testing in Xcode 7](http://masilotti.com/ui-testing-xcode-7/)
 - [HSTestingBackchannel : ‘Cheat’ by communicating directly with your app](https://github.com/ConfusedVorlon/HSTestingBackchannel)
+- [Automating App Store screenshots using fastlane snapshot and frameit](https://tisunov.github.io/2015/11/06/automating-app-store-screenshots-generation-with-fastlane-snapshot-and-sketch.html)
 
 **Note**: Since there is no official way to trigger a screenshot from UI Tests, `snapshot` uses a workaround (described in [How Does It Work?](#how-does-it-work)) to trigger a screenshot. If you feel like this should be done right, please duplicate radar [23062925](https://openradar.appspot.com/radar?id=5056366381105152).
 
@@ -140,7 +142,7 @@ Here a few links to get started:
 - Run `snapshot init` in your project folder
 - Add the ./SnapshotHelper.swift to your UI Test target (You can move the file anywhere you want)
 - (Objective C only) add the bridging header to your test class. 
- - `#import “MYUITests-Swift.h"`
+ - `#import "MYUITests-Swift.h"`
  - The bridging header is named after your test target with -Swift.h appended.
 - In your UI Test class, click the `Record` button on the bottom left and record your interaction
 - To take a snapshot, call the following between interactions
@@ -151,14 +153,14 @@ Here a few links to get started:
 **Swift**
 ```swift
 let app = XCUIApplication()
-setLanguage(app)
+setupSnapshot(app)
 app.launch()
 ```
 
 **Objective C**
 ```objective-c
 XCUIApplication *app = [[XCUIApplication alloc] init];
-[Snapshot setLanguage:app];
+[Snapshot setupSnapshot:app];
 [app launch];
 ```
 
@@ -193,11 +195,21 @@ There are a lot of options available that define how to build your app, for exam
 snapshot --scheme "UITests" --configuration "Release"  --sdk "iphonesimulator"
 ``` 
 
+Reinstall the app before running `snapshot`
+
+```sh
+snapshot --reinstall_app --app_identifier "tools.fastlane.app"
+```
+
 For a list for all available options run
 
 ```sh
 snapshot --help
 ```
+
+After running `snapshot` you will get a nice summary:
+
+<img src="assets/testSummary.png" width="500">
 
 ## Snapfile
 
@@ -224,6 +236,8 @@ languages([
   "es-ES"
 ])
 
+launch_arguments("-username Felix")
+
 # The directory in which the screenshots should be stored
 output_directory './screenshots'
 
@@ -238,19 +252,56 @@ You can run this command in the terminal to delete and re-create all iOS simulat
 snapshot reset_simulators
 ```
 
-**Warning**: This will delete **all** your simulators and replace by new ones! This is useful, if you run into weird `Instruments` problems when running `snapshot`. 
+**Warning**: This will delete **all** your simulators and replace by new ones! This is useful, if you run into weird problems when running `snapshot`. 
 
 You can use the environment variable `SNAPSHOT_FORCE_DELETE` to stop asking for confirmation before deleting.
+
+## Update snapshot helpers
+
+Some updates require the helper files to be updated. `snapshot` will automatically warn you and tell you how to update.
+
+Basically you can run 
+
+```
+snapshot update
+```
+
+to update your `SnapshotHelper.swift` files. In case you modified your `SnapshotHelper.swift` and want to manually update the file, check out [SnapshotHelper.swift](https://github.com/fastlane/snapshot/blob/master/lib/assets/SnapshotHelper.swift).
+
+## Launch Arguments
+
+You can provide additional arguments to your app on launch. These strings will be available in your code through `NSProcessInfo.processInfo().arguments`. Alternatively use user-default syntax (`-key value`) and they will be available as key-value pairs in `NSUserDefaults.standardUserDefaults()`.
+
+`snapshot` includes `-FASTLANE_SNAPSHOT YES`, which will set a temporary user default for the key `FASTLANE_SNAPSHOT`, you may use this to detect when the app is run by `snapshot`.
+
+```swift
+if NSUserDefaults.standardUserDefaults().boolForKey("FASTLANE_SNAPSHOT") {
+    // runtime check that we are in snapshot mode
+}
+
+username.text = NSUserDefaults.standardUserDefaults().stringForKey("username")
+// username.text = "Felix"
+```
+
+Specify multiple argument strings and `snapshot` will generate screenshots for each combination of arguments, devices, and languages. This is useful for comparing the same screenshots with different feature flags, dynamic text sizes, and different data sets.
+
+```ruby
+# Snapfile for A/B Test Comparison
+launch_arguments([
+  "-secretFeatureEnabled YES",
+  "-secretFeatureEnabled NO"
+])
+```
 
 # How does it work?
 
 The easiest solution would be to just render the UIWindow into a file. That's not possible because UI Tests don't run on a main thread. So `snapshot` uses a different approach:
 
-When you run unit tests in Xcode, the reporter generates a plist file, documenting all events that occured during the tests ([More Information](http://michele.io/test-logs-in-xcode)). Additionally, Xcode generates screenshots before, during and after each of these events. There seems to be no way to manually trigger a screenshot event. The screenshots and the plist files are stored in the DerivedData directory, which `snapshot` stores in a temporary folder.
+When you run unit tests in Xcode, the reporter generates a plist file, documenting all events that occured during the tests ([More Information](http://michele.io/test-logs-in-xcode)). Additionally, Xcode generates screenshots before, during and after each of these events. There is no way to manually trigger a screenshot event. The screenshots and the plist files are stored in the DerivedData directory, which `snapshot` stores in a temporary folder.
 
-When the user calls `snapshot(...)` in the UI Tests (Swift or Objective C) the script actually just does a swipe gesture outside of the screen bounds which doesn't make any sense. It has no effect to the application and is not something you would do in your tests. The goal was to find *some* event that a user would never trigger, so that we know it's from `snapshot`.
+When the user calls `snapshot(...)` in the UI Tests (Swift or Objective C) the script actually does a rotation to `.Unknown` which doesn't have any effect on the actual app, but is enough to trigger a screenshot. It has no effect to the application and is not something you would do in your tests. The goal was to find *some* event that a user would never trigger, so that we know it's from `snapshot`.
 
-`snapshot` then iterates through all test events and check where we did this weird gesture. Once `snapshot` has all events triggered by `snapshot` it collects a ordered list of all the file names of the actual screenshots of the application. 
+`snapshot` then iterates through all test events and check where we did this weird rotation. Once `snapshot` has all events triggered by `snapshot` it collects a ordered list of all the file names of the actual screenshots of the application. 
 
 In the test output, the Swift `snapshot` function will print out something like this
 
@@ -283,6 +334,7 @@ Also, feel free to duplicate radar [23062925](https://openradar.appspot.com/rada
 - [`boarding`](https://github.com/fastlane/boarding): The easiest way to invite your TestFlight beta testers 
 - [`gym`](https://github.com/fastlane/gym): Building your iOS apps has never been easier
 - [`scan`](https://github.com/fastlane/scan): The easiest way to run tests of your iOS and Mac app
+- [`match`](https://github.com/fastlane/match): Easily sync your certificates and profiles across your team using git
 
 ##### [Like this tool? Be the first to know about updates and new fastlane tools](https://tinyletter.com/krausefx)
 
