@@ -29,7 +29,7 @@ module Snapshot
         "iPhone-6-Plus",
         "iPhone-6s",
         "iPhone-6s-Plus"
-      ].each do |d| 
+      ].each do |d|
         FastlaneCore::CommandExecutor.execute(command: "defaults write com.apple.iphonesimulator SimulatorWindowLastScale-com.apple.CoreSimulator.SimDeviceType.#{d} 1")
       end
 
