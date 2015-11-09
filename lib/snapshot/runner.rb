@@ -18,6 +18,21 @@ module Snapshot
 
       clear_previous_screenshots if Snapshot.config[:clear_previous_screenshots]
 
+      Helper.log.info "Resetting all simulators screen scale to 1".green
+
+      [
+        "Apple-TV-1080p",
+        "iPad-2",
+        "iPad-Retina",
+        "iPhone-5s",
+        "iPhone-6",
+        "iPhone-6-Plus",
+        "iPhone-6s",
+        "iPhone-6s-Plus"
+      ].each do |d|
+        FastlaneCore::CommandExecutor.execute(command: "defaults write com.apple.iphonesimulator SimulatorWindowLastScale-com.apple.CoreSimulator.SimDeviceType.#{d} 1")
+      end
+
       Helper.log.info "Building and running project - this might take some time...".green
 
       self.number_of_retries = 0
@@ -70,7 +85,7 @@ module Snapshot
                                                 ErrorHandler.handle_test_error(output, return_code)
 
                                                 # no exception raised... that means we need to retry
-                                                Helper.log.info "Cought error... #{return_code}".red
+                                                Helper.log.info "Caught error... #{return_code}".red
 
                                                 self.number_of_retries += 1
                                                 if self.number_of_retries < 20
