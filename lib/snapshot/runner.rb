@@ -22,7 +22,7 @@ module Snapshot
 
       all_device_types = `xcrun simctl list devicetypes`.scan(/.*\s\((.*)\)/)
       all_device_types.each do |d|
-        `defaults write com.apple.iphonesimulator SimulatorWindowLastScale-#{d} 1`
+        `defaults write com.apple.iphonesimulator SimulatorWindowLastScale-#{d[0]} 1`
       end
 
       Helper.log.info "Building and running project - this might take some time...".green
