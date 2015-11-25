@@ -20,6 +20,13 @@ module Snapshot
 
       clear_previous_screenshots if Snapshot.config[:clear_previous_screenshots]
 
+      Helper.log.info "Resetting all simulators screen scale to 1".green
+
+      FastlaneCore::Simulator.all.each do |d|
+        device_type = d.name.gsub(/\s/, "-")
+        `defaults write com.apple.iphonesimulator SimulatorWindowLastScale-#{device_type} 1`
+      end
+
       Helper.log.info "Building and running project - this might take some time...".green
 
       self.number_of_retries = 0
