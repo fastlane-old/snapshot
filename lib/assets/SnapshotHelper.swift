@@ -52,11 +52,13 @@ func snapshot(name: String, waitForLoadingIndicator: Bool = false)
     
     class func waitForLoadingIndicatorToDisappear()
     {
-        let query = XCUIApplication().statusBars.childrenMatchingType(.Other).elementBoundByIndex(1).childrenMatchingType(.Other)
+        let app = XCUIApplication()
+        let predicate = NSPredicate(format: "label == 'Network connection in progress'")
+        let element = app.statusBars.childrenMatchingType(.Other).elementBoundByIndex(1).childrenMatchingType(.Other).elementMatchingPredicate(predicate)
         
-        while (query.count > 4) {
+        while (element.exists) {
             sleep(1)
-            print("Number of Elements in Status Bar: \(query.count)... waiting for status bar to disappear")
+            print("Network activity indicator present... waiting for status bar to disappear")
         }
     }
 }
