@@ -16,6 +16,11 @@ module Snapshot
           available_devices.each do |key_name, output_name|
             next unless File.basename(screenshot).include?(key_name)
 
+            ["portrait", "landscape"].each do |orientation|
+              if File.basename(screenshot).include? orientation
+                output_name += " (#{orientation.capitalize})"
+              end
+            end
             # This screenshot is from this device
             @data[language] ||= {}
             @data[language][output_name] ||= []

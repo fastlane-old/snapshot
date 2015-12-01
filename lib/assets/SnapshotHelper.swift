@@ -66,11 +66,26 @@ class Snapshot: NSObject {
         if waitForLoadingIndicator {
             waitForLoadingIndicatorToDisappear()
         }
-
-        print("snapshot: \(name)") // more information about this, check out https://github.com/fastlane/snapshot
-
+        
+        let orientation = detectDeviceOrientation()
+        print("snapshot: \(name)-\(orientation.isPortrait ? "portrait" : "landscape")")  // more information about this, check out https://github.com/krausefx/snapshot
+        
         sleep(1) // Waiting for the animation to be finished (kind of)
         XCUIDevice.sharedDevice().orientation = .Unknown
+        //this speeds up orientation detect on next snapshot calls
+        XCUIDevice.sharedDevice().orientation = orientation
+    }
+    
+    class func detectDeviceOrientation() -> UIDeviceOrientation{
+        let orientation = XCUIDevice.sharedDevice().orientation
+        if orientation.isValidInterfaceOrientation{
+            return orientation
+        }
+        
+        //this is slightly hackish solution, but because of setting .Unknown orientation for snapshot, dealing with orientation is pretty complicated
+        let coordinate = XCUIApplication().windows.elementBoundByIndex(0)
+            .coordinateWithNormalizedOffset(CGVectorMake(1.0, 1.0)).screenPoint
+        return coordinate.x < coordinate.y ? .Portrait : .LandscapeLeft
     }
 
     class func waitForLoadingIndicatorToDisappear() {
