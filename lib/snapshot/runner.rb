@@ -55,6 +55,7 @@ module Snapshot
       File.write("/tmp/language.txt", language)
 
       Fixes::SimulatorZoomFix.patch
+      Fixes::SimulatorLanguageFix.patch(language) if Snapshot.config[:force_simulator_language]
 
       command = TestCommandGenerator.generate(device_type: device_type)
 

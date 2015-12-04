@@ -47,6 +47,11 @@ module Snapshot
                                      default_value: [
                                        'en-US'
                                      ]),
+        FastlaneCore::ConfigItem.new(key: :force_simulator_language,
+                                     env_name: "SNAPSHOT_FORCE_SIMULATOR_LANGUAGE",
+                                     description: "This option will execute a fix and patch all simulators to the desired language to fix some issues with NSDateFormatter using the english locale",
+                                     is_string: false,
+                                     default_value: false),
         FastlaneCore::ConfigItem.new(key: :output_directory,
                                      short_option: "-o",
                                      env_name: "SNAPSHOT_OUTPUT_DIRECTORY",
