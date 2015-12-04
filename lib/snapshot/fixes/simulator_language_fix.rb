@@ -12,7 +12,6 @@ module Snapshot
           sim_language = language.tr("-", "_") # plist takes unterscores
         
           Helper.log.debug "Patching simulator #{simulator.name} to language #{sim_language}"
-          Helper.log.debug sim_pref_path
         
           command = "defaults write '#{sim_pref_path}' 'AppleLocale' '#{sim_language}'"
           puts command.yellow if $debug
