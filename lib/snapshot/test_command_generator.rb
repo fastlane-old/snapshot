@@ -42,7 +42,7 @@ module Snapshot
       def actions
         actions = []
         actions << :clean if Snapshot.config[:clean]
-        actions << :build # https://github.com/fastlane/snapshot/issues/246
+        actions << :build if Snapshot.config[:build] # https://github.com/fastlane/snapshot/issues/246 and https://github.com/fastlane/snapshot/issues/330
         actions << :test
 
         actions
