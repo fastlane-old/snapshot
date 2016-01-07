@@ -20,8 +20,8 @@ func setupSnapshot(app: XCUIApplication) {
     Snapshot.setupSnapshot(app)
 }
 
-func snapshot(name: String, waitForLoadingIndicator: Bool = false) {
-    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator)
+func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlerts: Bool = true) {
+    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator, waitForAlerts: waitForAlerts)
 }
 
 class Snapshot: NSObject {
@@ -61,9 +61,13 @@ class Snapshot: NSObject {
         }
     }
 
-    class func snapshot(name: String, waitForLoadingIndicator: Bool = false) {
+    class func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlerts: Bool = true) {
         if waitForLoadingIndicator {
             waitForLoadingIndicatorToDisappear()
+        }
+
+        if waitForAlerts {
+            waitForAlertsToBeDismissed()
         }
 
         print("snapshot: \(name)") // more information about this, check out https://github.com/krausefx/snapshot
@@ -74,7 +78,7 @@ class Snapshot: NSObject {
 
     class func waitForLoadingIndicatorToDisappear() {
         let query = XCUIApplication().statusBars.childrenMatchingType(.Other).elementBoundByIndex(1).childrenMatchingType(.Other)
-        
+
         while query.count > 4 {
             sleep(1)
             print("Number of Elements in Status Bar: \(query.count)... waiting for status bar to disappear")
