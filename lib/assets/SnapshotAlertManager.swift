@@ -42,9 +42,6 @@ class SnapshotAlertManager: NSObject {
 
     class func waitForAlertsToBeDismissed()
     {
-        if alertInterruptionMonitor == nil {
-            print("The SnapshotAlertManager can automatically hide alerts that will prevent action or screenshots. Just call this method to enable it : automaticallyDismissAlerts(testCase:XCTestCase)")
-        }
         let query = XCUIApplication().alerts
         var waitCounter = 0
         while (query.count > 0) {
@@ -52,7 +49,11 @@ class SnapshotAlertManager: NSObject {
             waitCounter++
             print("Found an alert... waiting for it to disappear")
             if waitCounter > 2 {
-                XCUIApplication().tap() //UIInterruptionMonitor will only trigger if an action is prevented by the alert so we generate one if the user script hasn't after 2 seconds
+              if alertInterruptionMonitor == nil {
+                  print("The SnapshotAlertManager can automatically hide alerts that will prevent actions or screenshots. Just call this method to enable it : automaticallyDismissAlerts(testCase:XCTestCase)")
+              } else {
+                  XCUIApplication().tap() //UIInterruptionMonitor will only trigger if an action is prevented by the alert so we generate one if the user script hasn't after 2 seconds
+              }
             }
         }
     }
