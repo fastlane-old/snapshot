@@ -8,10 +8,7 @@
 import Foundation
 import XCTest
 
-var alertInterruptionMonitor:NSObjectProtocol?
-
-func automaticallyDismissAlerts(testCase:XCTestCase) -> NSObjectProtocol
-{
+func automaticallyDismissAlerts(testCase:XCTestCase) -> NSObjectProtocol {
     return SnapshotAlertManager.automaticallyDismissAlerts(testCase)
 }
 
@@ -24,6 +21,8 @@ func waitForAlertsToBeDismissed() {
 }
 
 class SnapshotAlertManager: NSObject {
+    static var alertInterruptionMonitor:NSObjectProtocol?
+
     class func stopDismissingAlerts(testCase:XCTestCase) {
         if let previousDismissHandler = alertInterruptionMonitor {
             testCase.removeUIInterruptionMonitor(previousDismissHandler)
@@ -43,12 +42,12 @@ class SnapshotAlertManager: NSObject {
 
     class func waitForAlertsToBeDismissed()
     {
+        if alertInterruptionMonitor == nil {
+            print("The SnapshotAlertManager can automatically hide alerts that will prevent action or screenshots. Just call this method to enable it : automaticallyDismissAlerts(testCase:XCTestCase)")
+        }
         let query = XCUIApplication().alerts
         var waitCounter = 0
         while (query.count > 0) {
-            if alertInterruptionMonitor == nil {
-                print("The SnapshotAlertManager can automatically hide alerts that will prevent action or screenshots. Just call this method to enable it : automaticallyDismissAlerts(testCase:XCTestCase)")
-            }
             sleep(1)
             waitCounter++
             print("Found an alert... waiting for it to disappear")
