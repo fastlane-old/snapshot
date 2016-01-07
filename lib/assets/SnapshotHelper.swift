@@ -10,87 +10,82 @@ import Foundation
 import XCTest
 
 var deviceLanguage = ""
-var alertDismissHandler: NSObjectProtocol?
 
-func setLanguage(app: XCUIApplication)
-{
-    Snapshot.setLanguage(app)
+@available(*, deprecated, message="use setupSnapshot: instead")
+func setLanguage(app: XCUIApplication) {
+    setupSnapshot(app)
 }
 
-func snapshot(name: String, waitForLoadingIndicator: Bool = true, waitForAlertsToBeHidden: Bool = true)
-{
-    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator, waitForAlertsToBeHidden: waitForAlertsToBeHidden)
+func setupSnapshot(app: XCUIApplication) {
+    Snapshot.setupSnapshot(app)
 }
 
-func automaticallyHideAlerts(testCase:XCTestCase)
-{
-    if let previousDismissHandler = alertDismissHandler {
-        testCase.removeUIInterruptionMonitor(previousDismissHandler)
+func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlerts: Bool = true) {
+    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator, waitForAlerts: waitForAlerts)
+}
+
+class Snapshot: NSObject {
+
+    class func setupSnapshot(app: XCUIApplication) {
+        setLanguage(app)
+        setLaunchArguments(app)
     }
-    alertDismissHandler = Snapshot.automaticallyHideAlerts(testCase)
-}
 
-
-
-@objc class Snapshot: NSObject
-{
-    class func setLanguage(app: XCUIApplication)
-    {
+    class func setLanguage(app: XCUIApplication) {
         let path = "/tmp/language.txt"
-        
+
         do {
             let locale = try NSString(contentsOfFile: path, encoding: NSUTF8StringEncoding) as String
             deviceLanguage = locale.substringToIndex(locale.startIndex.advancedBy(2, limit:locale.endIndex))
-            app.launchArguments += ["-AppleLanguages", "(\(deviceLanguage))", "-AppleLocale", "\"\(locale)\"","-ui_testing"]
+            app.launchArguments += ["-AppleLanguages", "(\(deviceLanguage))", "-AppleLocale", "\"\(locale)\"", "-ui_testing"]
         } catch {
             print("Couldn't detect/set language...")
         }
     }
 
-    class func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlertsToBeHidden: Bool = true)
-    {
-        if (waitForLoadingIndicator)
-        {
-            waitForLoadingIndicatorToDisappear()
-        }
-        if (waitForAlertsToBeHidden)
-        {
-            waitForAlertsToDisappear()
-        }
-        print("snapshot: \(name)") // more information about this, check out https://github.com/krausefx/snapshot
+    class func setLaunchArguments(app: XCUIApplication) {
+        let path = "/tmp/snapshot-launch_arguments.txt"
 
-        let view = XCUIApplication()
-        let start = view.coordinateWithNormalizedOffset(CGVectorMake(32.10, 30000))
-        let finish = view.coordinateWithNormalizedOffset(CGVectorMake(31, 30000))
-        start.pressForDuration(0, thenDragToCoordinate: finish)
-        sleep(1)
+        app.launchArguments += ["-FASTLANE_SNAPSHOT", "YES"]
+
+        do {
+            let launchArguments = try NSString(contentsOfFile: path, encoding: NSUTF8StringEncoding) as String
+            let regex = try NSRegularExpression(pattern: "(\\\".+?\\\"|\\S+)", options: [])
+            let matches = regex.matchesInString(launchArguments, options: [], range: NSRange(location:0, length:launchArguments.characters.count))
+            let results = matches.map { result -> String in
+                (launchArguments as NSString).substringWithRange(result.range)
+            }
+            app.launchArguments += results
+        } catch {
+            print("Couldn't detect/set launch_arguments...")
+        }
     }
 
-    class func waitForLoadingIndicatorToDisappear()
-    {
+    class func snapshot(name: String, waitForLoadingIndicator: Bool = false, waitForAlerts: Bool = true) {
+        if waitForLoadingIndicator {
+            waitForLoadingIndicatorToDisappear()
+        }
+
+        if waitForAlerts {
+            waitForAlertsToBeDismissed()
+        }
+
+        print("snapshot: \(name)") // more information about this, check out https://github.com/krausefx/snapshot
+
+        sleep(1) // Waiting for the animation to be finished (kind of)
+        XCUIDevice.sharedDevice().orientation = .Unknown
+    }
+
+    class func waitForLoadingIndicatorToDisappear() {
         let query = XCUIApplication().statusBars.childrenMatchingType(.Other).elementBoundByIndex(1).childrenMatchingType(.Other)
 
-        while (query.count > 4) {
+        while query.count > 4 {
             sleep(1)
             print("Number of Elements in Status Bar: \(query.count)... waiting for status bar to disappear")
         }
     }
-
-    class func automaticallyHideAlerts(testCase:XCTestCase) -> NSObjectProtocol
-    {
-        return testCase.addUIInterruptionMonitorWithDescription("Snapshot alert auto hide") { (alert: XCUIElement) -> Bool in
-            print("Alert (\(alert.label)) will be hidden")
-            return false
-        }
-    }
-
-    class func waitForAlertsToDisappear()
-    {
-        let query = XCUIApplication().alerts
-
-        while (query.count > 0) {
-            sleep(1)
-            print("Found an alert... waiting for it to disappear")
-        }
-    }
 }
+
+// Please don't remove the lines below
+// They are used to detect outdated configuration files
+// SnapshotHelperVersion [[1.0]]
