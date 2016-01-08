@@ -14,6 +14,8 @@ module Snapshot
         sleep 3 # to be sure the user sees this, as compiling clears the screen
       end
 
+      verify_helper_is_current
+
       FastlaneCore::PrintTable.print_values(config: Snapshot.config, hide_keys: [], title: "Summary for snapshot #{Snapshot::VERSION}")
 
       clear_previous_screenshots if Snapshot.config[:clear_previous_screenshots]
@@ -22,31 +24,84 @@ module Snapshot
 
       self.number_of_retries = 0
       errors = []
+      results = {} # collect all the results for a nice table
+      launch_arguments_set = config_launch_arguments
       Snapshot.config[:devices].each do |device|
-        Snapshot.config[:languages].each do |language|
-          begin
-            launch(language, device)
-          rescue => ex
-            Helper.log.error ex # we should to show right here as well
-            errors << ex
+        launch_arguments_set.each do |launch_arguments|
+          Snapshot.config[:languages].each do |language|
+            results[device] ||= {}
 
-            raise ex if Snapshot.config[:stop_after_first_error]
+            begin
+              results[device][language] = launch(language, device, launch_arguments)
+            rescue => ex
+              Helper.log.error ex # we should to show right here as well
+              Helper.log.error "Backtrace:\n\t#{ex.backtrace.join("\n\t")}"
+              errors << ex
+              results[device][language] = false
+              raise ex if Snapshot.config[:stop_after_first_error]
+            end
           end
         end
       end
+
+      print_results(results)
 
       raise errors.join('; ') if errors.count > 0
 
       # Generate HTML report
       ReportsGenerator.new.generate
+
+      # Clear the Derived Data
+      FileUtils.rm_rf(TestCommandGenerator.derived_data_path)
     end
 
-    def launch(language, device_type)
+    def config_launch_arguments
+      launch_arguments = Array(Snapshot.config[:launch_arguments])
+      # if more than 1 set of arguments, use a tuple with an index
+      if launch_arguments.count == 1
+        [launch_arguments]
+      else
+        launch_arguments.map.with_index { |e, i| [i, e] }
+      end
+    end
+
+    def print_results(results)
+      return if results.count == 0
+
+      rows = []
+      results.each do |device, languages|
+        current = [device]
+        languages.each do |language, value|
+          current << (value == true ? " 💚" : " ❌")
+        end
+        rows << current
+      end
+
+      params = {
+        rows: rows,
+        headings: ["Device"] + results.values.first.keys,
+        title: "snapshot results"
+      }
+      puts ""
+      puts Terminal::Table.new(params)
+      puts ""
+    end
+
+    def launch(language, device_type, launch_arguments)
       screenshots_path = TestCommandGenerator.derived_data_path
-      FileUtils.rm_rf(screenshots_path)
+      FileUtils.rm_rf(File.join(screenshots_path, "Logs"))
+      FileUtils.rm_rf(screenshots_path) if Snapshot.config[:clean]
       FileUtils.mkdir_p(screenshots_path)
 
       File.write("/tmp/language.txt", language)
+      File.write("/tmp/snapshot-launch_arguments.txt", launch_arguments.last)
+
+      Fixes::SimulatorZoomFix.patch
+
+      Snapshot.kill_simulator # because of https://github.com/fastlane/snapshot/issues/337
+      `xcrun simctl shutdown booted &> /dev/null`
+
+      uninstall_app(device_type) if Snapshot.config[:reinstall_app]
 
       command = TestCommandGenerator.generate(device_type: device_type)
 
@@ -70,11 +125,11 @@ module Snapshot
                                                 ErrorHandler.handle_test_error(output, return_code)
 
                                                 # no exception raised... that means we need to retry
-                                                Helper.log.info "Cought error... #{return_code}".red
+                                                Helper.log.info "Caught error... #{return_code}".red
 
                                                 self.number_of_retries += 1
                                                 if self.number_of_retries < 20
-                                                  launch(language, device_type)
+                                                  launch(language, device_type, launch_arguments)
                                                 else
                                                   # It's important to raise an error, as we don't want to collect the screenshots
                                                   raise "Too many errors... no more retries...".red
@@ -82,7 +137,19 @@ module Snapshot
                                               end)
 
       raw_output = File.read(TestCommandGenerator.xcodebuild_log_path)
-      Collector.fetch_screenshots(raw_output, language, device_type)
+      return Collector.fetch_screenshots(raw_output, language, device_type, launch_arguments.first)
+    end
+
+    def uninstall_app(device_type)
+      Helper.log.debug "Uninstalling app '#{Snapshot.config[:app_identifier]}' from #{device_type}..."
+      Snapshot.config[:app_identifier] ||= ask("App Identifier: ")
+      device_udid = TestCommandGenerator.device_udid(device_type)
+
+      Helper.log.info "Launch Simulator #{device_type}".yellow
+      `xcrun instruments -w #{device_udid} &> /dev/null`
+
+      Helper.log.info "Uninstall application #{Snapshot.config[:app_identifier]}".yellow
+      `xcrun simctl uninstall #{device_udid} #{Snapshot.config[:app_identifier]} &> /dev/null`
     end
 
     def clear_previous_screenshots
@@ -92,5 +159,20 @@ module Snapshot
         File.delete(current)
       end
     end
+
+    # rubocop:disable Style/Next
+    def verify_helper_is_current
+      helper_files = Update.find_helper
+      helper_files.each do |path|
+        content = File.read(path)
+
+        if content.include?("start.pressForDuration(0, thenDragToCoordinate: finish)")
+          Helper.log.error "Your '#{path}' is outdated, please run `snapshot update`".red
+          Helper.log.error "to update your Helper file".red
+          raise "Please update your Snapshot Helper file".red
+        end
+      end
+    end
+    # rubocop:enable Style/Next
   end
 end

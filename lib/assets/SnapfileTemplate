@@ -6,7 +6,8 @@
 #   "iPhone 6 Plus",
 #   "iPhone 5",
 #   "iPhone 4s",
-#   "iPad Retina"
+#   "iPad Retina",
+#   "iPad Pro"
 # ])
 
 languages([
@@ -14,6 +15,9 @@ languages([
   "de-DE",
   "it-IT"
 ])
+
+# Arguments to pass to the app on launch. See https://github.com/fastlane/snapshot#launch_arguments
+# launch_arguments("-favColor red")
 
 # The name of the scheme which contains the UI Tests
 # scheme "SchemeName"
