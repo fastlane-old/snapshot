@@ -5,6 +5,6 @@ before_install:
   - gem update --system
   - gem install bundler
 rvm:
-  - 2.1.6
-  - 2.2.2
+  - 2.1.8
+  - 2.2.4
 script: bundle exec fastlane test
