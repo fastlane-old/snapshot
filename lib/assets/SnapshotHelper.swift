@@ -21,8 +21,8 @@ func setupSnapshot(app: XCUIApplication) {
     Snapshot.setupSnapshot(app)
 }
 
-func snapshot(name: String, waitForLoadingIndicator: Bool = true) {
-    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator)
+func snapshot(name: String, waitForLoadingIndicator: Bool = true, waitForAlerts: Bool = true) {
+    Snapshot.snapshot(name, waitForLoadingIndicator: waitForLoadingIndicator, waitForAlerts: waitForAlerts)
 }
 
 class Snapshot: NSObject {
@@ -76,9 +76,13 @@ class Snapshot: NSObject {
         }
     }
 
-    class func snapshot(name: String, waitForLoadingIndicator: Bool = true) {
+    class func snapshot(name: String, waitForLoadingIndicator: Bool = true, waitForAlerts: Bool = true) {
         if waitForLoadingIndicator {
             waitForLoadingIndicatorToDisappear()
+        }
+
+        if waitForAlerts {
+            waitForAlertsToBeDismissed()
         }
 
         print("snapshot: \(name)") // more information about this, check out https://github.com/fastlane/snapshot
