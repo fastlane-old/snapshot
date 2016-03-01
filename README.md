@@ -379,7 +379,7 @@ You can use [SimulatorStatusMagic](https://github.com/shinydevelopment/Simulator
 ## Editing the `Snapfile`
 Change syntax highlighting to *Ruby*.
 
-### Simulator doesn't launch the application
+## Simulator doesn't launch the application
 
 When the app dies directly after the application is launched there might be 2 problems
 
@@ -392,6 +392,31 @@ To detect the currently used localization in your tests, use the following code:
 
 ```javascript
 You can access the language using the `deviceLanguage` variable.
+```
+
+## Prefilling
+
+- You can prefill data within your app using [HSTestingBackchannel](https://github.com/ConfusedVorlon/HSTestingBackchannel)
+
+## Passing a Preprocessor Macro
+
+Snapshot automatically sets the environment variable FASTLANE_SNAPSHOT=1
+
+- In the Preprocessor Macros setting of your project, set the following 
+ - You probably want to set this at the project, rather than target level
+ - The +0 ensures that when nothing is defined in the Environment, the macro has a valid value
+
+```
+FASTLANE_SNAPSHOT=($(FASTLANE_SNAPSHOT)+0)
+$(inherited)
+```
+
+- In your code, use
+
+```
+#if FASTLANE_SNAPSHOT
+	NSLOG(@"Compiled and run by snapshot")
+#end
 ```
 
 # Need help?
